@@ -52,22 +52,21 @@ export default function Page() {
       });
     }
 
-    // PDF speichern
-    const pdfBytes = await pdfDoc.save();
-    const arrayBuffer = pdfBytes.buffer.slice(
-    pdfBytes.byteOffset,
-    pdfBytes.byteOffset + pdfBytes.byteLength
-);
-const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+ // PDF speichern
+const pdfBytes = await pdfDoc.save();
 
-    const url = URL.createObjectURL(blob);
+// ✅ TS-safe: Bytes in ein "normales" Uint8Array kopieren (ArrayBuffer, kein SharedArrayBuffer-Union)
+const safeBytes = new Uint8Array(pdfBytes.length);
+safeBytes.set(pdfBytes);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ausgefuellt.pdf";
-    a.click();
+const blob = new Blob([safeBytes], { type: "application/pdf" });
 
-    URL.revokeObjectURL(url);
+const url = URL.createObjectURL(blob);
+const a = document.createElement("a");
+a.href = url;
+a.download = "ausgefuellt.pdf";
+a.click();
+URL.revokeObjectURL(url);
   }
 
   return (
