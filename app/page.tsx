@@ -10,7 +10,7 @@ export default function Page() {
 
   async function generatePDF() {
     // Template laden
-    const templateBytes = await fetch("/template.pdf").then((res) =>
+    const templateBytes = await fetch("/Template.pdf").then((res) =>
       res.arrayBuffer()
     );
 
