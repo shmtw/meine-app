@@ -7,12 +7,22 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 export default function Page() {
   // Variablen für dropdown!!
   
-  const sigRef = useRef<SignatureCanvas | null>(null);
+const sigRef = useRef<SignatureCanvas | null>(null);
 const [sattelfarbe, setSattelfarbe] = useState("");
 const [nahtfarbe, setNahtfarbe] = useState("");
 const [groesse, setGroesse] = useState("");
+const [keder, setKeder] = useState("");
+const [model, setModel] = useState("");
+const [sattelbaum, setSattelbaum] = useState("");
+const [efter, setEfter] = useState("");
+const [spiegelart, setSpiegelart] = useState("");
+const [spiegelfarbe, setSpiegelfarbe] = useState("");
+const [zubusseart, setZubusseart] = useState("");
+const [zubussefarbe, setZubussfarbe] = useState("");
 
-// 2) DROPDOWNS: Hier Text + Optionen anpassen
+
+
+// 2)
 const Dropdown = ({
   value,
   onChange,
@@ -52,13 +62,14 @@ const Dropdown = ({
     const page = pdfDoc.getPages()[0];
     const { width, height } = page.getSize();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await
+    pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    //Gitternetz für x y bestimmung
 
    
 
 // Gitternetz!!!!!!!!
-/*for (let x = 0; x <= width; x += 50) {
+for (let x = 0; x <= width; x += 50) {
   page.drawLine({
     start: { x, y: 0 },
     end: { x, y: height },
@@ -77,24 +88,89 @@ for (let y = 0; y <= height; y += 50) {
   });
   page.drawText(String(y), { x: 2, y: y + 2, size: 8, font, color: rgb(0.5,0.5,0.5) });
 }
-*/
+
    // ab ins pdf mit der Auswahl POS!!!!!!!!!!!!
     page.drawText(sattelfarbe || "-", {
-      x: 50,
-      y: 800,
-      size: 12,
+      x: 400,
+      y: 600,
+      size: 10,
       font
     })
+    //check
     page.drawText(nahtfarbe || "-", {
-      x: 50,
-      y: 750,
-      size: 12,
+      x: 425,
+      y: 300,
+      size: 10,
       font
     })
+    //check
     page.drawText(groesse || "-", {
+      x: 190,
+      y: 583,
+      size: 10,
+      font
+    })
+    //check
+    page.drawText(keder || "-",{
+      x: 425,
+      y: 475,
+      size: 10,
+      font
+    })
+    //check 
+    page.drawText(model || "-",{
+      x: 104,
+      y: 600,
+      size: 10,
+      font: fontBold
+    })
+    //cjecl 
+    page.drawText(sattelbaum || "-",{
       x: 50,
-      y: 700,
-      size: 12,
+      y: 600,
+      size: 10,
+      font: fontBold
+    })
+    page.drawText(efter || "-",{
+      x: 300,
+      y: 583,
+      size: 10,
+      font
+    })
+    page.drawText(spiegelart || "-",{
+      x: 425,
+      y: 560,
+      size: 10,
+      font
+    })
+    page.drawText(spiegelfarbe || "-",{
+      x: 425,
+      y: 548,
+      size: 10,
+      font
+    })
+    page.drawText(zubusseart || "-",{
+      x: 425,
+      y: 530,
+      size: 10,
+      font
+    })
+    page.drawText(zubussefarbe || "-",{
+      x: 425,
+      y: 518,
+      size: 10,
+      font
+    })
+    page.drawText(zubusseart || "-",{
+      x: 110,
+      y: 467,
+      size: 10,
+      font
+    })
+    page.drawText(zubussefarbe || "-",{
+      x: 110,
+      y: 455,
+      size: 10,
       font
     })
 
@@ -111,8 +187,8 @@ for (let y = 0; y <= height; y += 50) {
       const sigHeight =
         (pngImage.height / pngImage.width) * sigWidth;
 
-      const x = width - sigWidth - 40; // 40px Rand rechts
-      const y = 40; // 40px Rand unten
+      const x = width - sigWidth - 40;
+      const y = 40; 
 
       page.drawImage(pngImage, {
         x,
@@ -141,33 +217,88 @@ URL.revokeObjectURL(url);
 
   return (
     <main style={{ padding: 30, maxWidth: 600 }}>
-      <h1>Sattelbestellung</h1>
-
-      
-
+      <h1
+        style={{fontWeight: "bold", fontSize: 20}}>
+        Sattelbestellung 
+      </h1>
+    <br/>
+    <h1
+      style={{fontWeight: "bold", fontSize: 18}}>
+      Sattel allgemein 
+    </h1>
 <>
+    <Dropdown
+    value={sattelbaum}
+    onChange={setSattelbaum}
+    placeholder="Sattelbaum"
+    options={["KS-Baum", "AEX-Baum"]}
+  />   
+  <Dropdown
+    value={model}
+    onChange={setModel}
+    placeholder="Modell"
+    options={["Bentley St. Michael", "Bentley St. Florian", "Bentley Performence", "Endurance", "Icelandic", "FSA Dressur", "FSA Springer", "FSA Vielseitigkeit", "FSA Icelandic", "Cayenne Classic", "Cayenne Offroad"]}
+  />
   <Dropdown
     value={sattelfarbe}
     onChange={setSattelfarbe}
     placeholder="Sattelfarbe"
-    options={["Sattelfarbe: Schwarz", "Sattelfarbe: Braun", "Sattelfarbe: Cognac"]} // <-- Optionen ändern
+    options={["Sattelfarbe: Schwarz", "Sattelfarbe: Braun", "Sattelfarbe: Cognac"]} 
   />
-
   <Dropdown
     value={nahtfarbe}
     onChange={setNahtfarbe}
     placeholder="Nahtfarbe"
     options={["Nähte: Rot", "Nähte: Cognac", "Nähte: Gelb", "Nähte: Braun", "Nähte: Beige", "Nähte: Grau", "Nähte: Weiss", "Nähte: Schwarz", "Nähte: Kirsche", "Nähte: Hellblau", "Nähte: Grün", "Nähte: Türkis", "Nähte: Kupfer", "Nähte: Lila", "Nähte: Blau", "Nähte: Orange"
-    ]} // <-- Optionen ändern
+    ]}
   />
-
+  <h1
+    style={{fontWeight: "bold", fontSize: 18}}>
+    Sitz
+  </h1>
   <Dropdown
     value={groesse}
     onChange={setGroesse}
     placeholder="Sitzgröße"
-    options={["Sitzgröße: 16", "Sitzgröße: 16,5", "Sitzgröße: 17", "Sitzgröße: 17,5", "Sitzgröße: 18"]} // <-- Optionen ändern
+    options={["Sitzgröße: 16", "Sitzgröße: 16,5", "Sitzgröße: 17", "Sitzgröße: 17,5", "Sitzgröße: 18"]}
   />
-</>
+  <Dropdown
+    value={keder}
+    onChange={setKeder}
+    placeholder="Kederfarbe"
+    options={["Keder: Rot", "Keder: Cognac", "Keder: Gelb", "Keder: Dunkelbraun", "Keder: Hellbraun", "Keder: Beige", "Keder: Grau", "Keder: Weiss", "Keder: Schwarz", "Keder: Lack Schwarz", "Keder: Türkis", "Keder: Blau", "Keder: Orange", "Keder: Silber", "Keder: Gold"]}
+  />  
+  <Dropdown
+    value={efter}
+    onChange={setEfter}
+    placeholder="Efterhöhe"
+    options={["Efter Standard", "Efter +1cm", "Efter +2cm", "Efter +3cm", "Efter -1cm", "Efter -2cm"]} 
+  />
+  <Dropdown
+    value={spiegelart}
+    onChange={setSpiegelart}
+    placeholder="Spiegel"
+    options={["Spiegel Lack", "Spiegel Leder"]}
+  />
+  <Dropdown
+    value={spiegelfarbe}
+    onChange={setSpiegelfarbe}
+    placeholder="Spiegelfarbe"
+    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "dunkelrot", "blau", "orange", "kroko schwarz", "kroko blau", "kroko dunkelrot", "kroko braun", "rochen", "schwarz - weiss", "gold", "gecko", "glitzer schwarz", "glitzer braun", "glitzer beige", "glitzer silber"]}
+  />
+  <Dropdown
+    value={zubusseart}
+    onChange={setZubusseart}
+    placeholder="Zubusse"
+    options={["Zubusse Lack", "Zubusse Leder"]}
+  />
+  <Dropdown
+    value={zubussefarbe}
+    onChange={setZubussfarbe}
+    placeholder="Zubusse Farbe"
+    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "dunkelrot", "blau", "orange"]}
+  />
+    </>
 
       {/* Unterschrift */}
       <div style={{ marginBottom: 20 }}>
