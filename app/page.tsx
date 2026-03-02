@@ -19,6 +19,19 @@ const [spiegelart, setSpiegelart] = useState("");
 const [spiegelfarbe, setSpiegelfarbe] = useState("");
 const [zubusseart, setZubusseart] = useState("");
 const [zubussefarbe, setZubussfarbe] = useState("");
+const [vorschnitt, setVorschnitt] = useState("");
+const [sattelblatt, setSattelblatt] = useState("");
+const [pauschentasche, setPauschentasche] = useState("");
+const [pauschetyp, setPauschetyp] = useState("");
+const [kissentyp, setKissentyp] = useState("");
+const [kissenlaenge, setKissenlaenge] = useState("");
+const [kissenkeder, setKissenkeder] = useState("");
+const [mono,setMono] = useState("");
+const [michael, setMichael] = useState("");
+
+const [steine, SetSteine] = useState("");
+const [kommentar, setKommentar] = useState("");
+
 
 
 
@@ -91,15 +104,15 @@ for (let y = 0; y <= height; y += 50) {
 
    // ab ins pdf mit der Auswahl POS!!!!!!!!!!!!
     page.drawText(sattelfarbe || "-", {
-      x: 400,
+      x: 250,
       y: 600,
       size: 10,
       font
     })
     //check
     page.drawText(nahtfarbe || "-", {
-      x: 425,
-      y: 300,
+      x: 400,
+      y: 600,
       size: 10,
       font
     })
@@ -162,14 +175,62 @@ for (let y = 0; y <= height; y += 50) {
       font
     })
     page.drawText(zubusseart || "-",{
-      x: 110,
+      x: 100,
       y: 467,
       size: 10,
       font
     })
     page.drawText(zubussefarbe || "-",{
-      x: 110,
+      x: 100,
       y: 455,
+      size: 10,
+      font
+    })
+    page.drawText(vorschnitt || "-",{
+      x: 100,
+      y: 550,
+      size: 10,
+      font
+    })
+    page.drawText(sattelblatt || "-",{
+      x: 425,
+      y: 400,
+      size: 10,
+      font
+    })
+    page.drawText(pauschentasche || "-",{
+      x: 100,
+      y: 388,
+      size: 10,
+      font
+    })
+    page.drawText(pauschetyp || "-",{
+      x: 100,
+      y: 430,
+      size: 10,
+      font
+    })
+    page.drawText(mono || "-",{
+      x: 425,
+      y: 389,
+      size: 10,
+      font
+    })
+    page.drawText(kissentyp || "-",{
+      x: 425,
+      y: 440,
+      size: 10,
+      font
+    })
+    page.drawText(kissenkeder || "-",{
+      x: 425,
+      y: 429,
+      size: 10,
+      font
+    })
+    page.drawText(kissenlaenge || "-",{
+      x: 425,
+      y: 418,
       size: 10,
       font
     })
@@ -297,6 +358,92 @@ URL.revokeObjectURL(url);
     onChange={setZubussfarbe}
     placeholder="Zubusse Farbe"
     options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "dunkelrot", "blau", "orange"]}
+  />
+  <h1
+    style={{fontWeight: "bold", fontSize: 18}}>
+    Sattelblatt
+  </h1>
+  <Dropdown
+    value={vorschnitt}
+    onChange={setVorschnitt}
+    placeholder="Vorschnitt"
+    options={["Vorschnitt Standard", "Vorschnitt -1cm", "Vorschnitt +1cm","Vorschnitt +2cm", "Vorschnitt +3cm"]}
+  />
+  <Dropdown
+    value={sattelblatt}
+    onChange={setSattelblatt}
+    placeholder="Sattelblatt"
+    options={["Sattelblatt doubliert", "Sattelblatt pig skin", "Sattelblatt glatt"]}
+  />
+  <Dropdown
+    value={mono}
+    onChange={setMono}
+    placeholder="Mono-Doppel"
+    options={["Standard", "Doppelblatt", "Monoblatt"]}
+  />
+  <h1
+    style={{fontWeight: "bold", fontSize: 18}}>
+    Pausche
+  </h1>
+  <Dropdown
+    value={pauschentasche}
+    onChange={setPauschentasche}
+    placeholder="Pauschentasche"
+    options={["PT: Ja", "PT: Nein"]}
+  />
+  <Dropdown
+    value={pauschetyp}
+    onChange={setPauschetyp}
+    placeholder="Pausche"
+    options={["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"]}
+  />
+  <h1
+    style={{fontWeight: "bold", fontSize: 18}}>
+    Kissen
+  </h1>
+  <Dropdown
+    value={kissentyp}
+    onChange={setKissentyp}
+    placeholder="Kissen"
+    options={["Kissen: Stabelizer", "Kissen: Frz. Kissen", "Kissen: Engl. Kissen"]}
+  />
+  <Dropdown
+    value={kissenkeder}
+    onChange={setKissenkeder}
+    placeholder="Kissenkeder"
+    options={["Kissenkeder: Rot", "Kissenkeder: Cognac", "Kissenkeder: Gelb", "Kissenkeder: Dunkelbraun", "Kissenkeder: Hellbraun", "Kissenkeder: Beige", "Kissenkeder: Grau", "Kissenkeder: Weiss", "Kissenkeder: Schwarz", "Kissenkeder: Lack Schwarz", "Kissenkeder: Türkis", "Kissenkeder: Blau", "Kissenkeder: Orange", "Kissenkeder: Silber", "Kissenkeder: Gold"]}
+  />
+  <Dropdown
+    value={kissenlaenge}
+    onChange={setKissenlaenge}
+    placeholder="Kissenlänge"
+    options={["Kissenlänge Standard", "Kissenlänge kurz", "Kissenlänge lang"]}
+  />
+  <input
+    type="text"
+    placeholder="Steine Beschreibung falls gewünscht"
+    value={steine}
+    onChange={(e) =>
+  SetSteine(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+  <textarea
+    placeholder="Zusätzliche Beschreibung"
+    value={kommentar}
+    onChange={(e) =>
+  setKommentar(e.target.value)}
+    rows={5}
+    style={{
+      width:500,
+      height: 120,
+      padding: 10,
+      marginBottom: 20,
+      resize: "none",
+    }}
   />
     </>
 
