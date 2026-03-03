@@ -33,6 +33,12 @@ const [steine, SetSteine] = useState("");
 const [kommentar, setKommentar] = useState("");
 const [zubehör, SetZubehör] = useState("");
 const [name, SetName] = useState("");
+const [preis, SetPreis] = useState("");
+const [anzahlung, SetAnzahlung] = useState("");
+const [straße, SetStraße] = useState("");
+const [plz, SetPlz] = useState("");
+const [tel, SetTel] =useState("");
+const [mail, SetMail] = useState("");
 
 
 
@@ -257,6 +263,43 @@ for (let y = 0; y <= height; y += 50) {
     page.drawText(`Name: ${name}` || "-",{
       x: 350,
       y: 750,
+      size: 12,
+      font
+    })
+    page.drawText(`Straße: ${straße}` || "-",{
+      x: 350,
+      y: 735,
+      size: 12,
+      font
+    })
+    page.drawText(`Ort: ${plz}` || "-",{
+      x: 350,
+      y: 722,
+      size: 12,
+      font
+    })
+    page.drawText(`Telefon: ${tel}` || "-",{
+      x: 350,
+      y: 709,
+      size: 12,
+      font
+    })
+    page.drawText(`E-Mail: ${mail}` || "-",{
+      x: 350,
+      y: 696,
+      size: 12,
+      font
+    })
+
+    page.drawText(`Preis: ${anzahlung}` || "-",{
+      x: 50,
+      y: 75,
+      size: 10,
+      font
+    })
+    page.drawText(`Anzahlung: ${preis}` || "-",{
+      x: 50,
+      y: 64,
       size: 10,
       font
     })
@@ -319,6 +362,54 @@ URL.revokeObjectURL(url);
     value={name}
     onChange={(e) =>
   SetName(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="Straße"
+    value={straße}
+    onChange={(e) =>
+  SetStraße(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="PLZ Ort"
+    value={plz}
+    onChange={(e) =>
+  SetPlz(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="Telefon"
+    value={tel}
+    onChange={(e) =>
+  SetTel(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="email"
+    value={mail}
+    onChange={(e) =>
+  SetMail(e.target.value)}
     style={{
       width:300,
       padding: 10,
@@ -506,6 +597,30 @@ URL.revokeObjectURL(url);
       resize: "none",
     }}
   />
+  <input
+    type="text"
+    placeholder="Preis"
+    value={preis}
+    onChange={(e) =>
+  SetPreis(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="Anzahlung"
+    value={anzahlung}
+    onChange={(e) =>
+  SetAnzahlung(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
     </>
 
       {/* Unterschrift */}
