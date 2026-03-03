@@ -31,6 +31,8 @@ const [michael, setMichael] = useState("");
 
 const [steine, SetSteine] = useState("");
 const [kommentar, setKommentar] = useState("");
+const [zubehör, SetZubehör] = useState("");
+const [name, SetName] = useState("");
 
 
 
@@ -246,6 +248,18 @@ for (let y = 0; y <= height; y += 50) {
       size: 10,
       font
     })
+    page.drawText(`Zubehör: ${zubehör}` || "-",{
+      x: 100,
+      y: 220,
+      size: 10,
+      font
+    })
+    page.drawText(`Name: ${name}` || "-",{
+      x: 350,
+      y: 750,
+      size: 10,
+      font
+    })
 
 
     // 🔹 Unterschrift unten rechts
@@ -295,6 +309,22 @@ URL.revokeObjectURL(url);
         Sattelbestellung 
       </h1>
     <br/>
+    <h1
+      style={{fontWeight: "bold", fontSize: 18}}>
+      Kunde
+    </h1>
+    <input
+    type="text"
+    placeholder="Name"
+    value={name}
+    onChange={(e) =>
+  SetName(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
     <h1
       style={{fontWeight: "bold", fontSize: 18}}>
       Sattel allgemein 
@@ -443,11 +473,30 @@ URL.revokeObjectURL(url);
       marginBottom: 20,
     }}
     />
+    <h1
+    style={{fontWeight: "bold", fontSize: 18}}>
+    Sonstiges
+  </h1>
   <textarea
     placeholder="Zusätzliche Beschreibung"
     value={kommentar}
     onChange={(e) =>
   setKommentar(e.target.value)}
+    rows={5}
+    style={{
+      width:500,
+      height: 120,
+      padding: 10,
+      marginBottom: 20,
+      resize: "none",
+    }}
+  />
+  <br/>
+  <textarea
+    placeholder="Zubehör"
+    value={zubehör}
+    onChange={(e) =>
+  SetZubehör(e.target.value)}
     rows={5}
     style={{
       width:500,
