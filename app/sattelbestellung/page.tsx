@@ -43,6 +43,29 @@ const [tel, SetTel] =useState("");
 const [mail, SetMail] = useState("");
 
 
+//Test dynamic
+
+const [modell, setModell] = useState("");
+const [pausche, setPausche] = useState("");
+
+// Modelle -> Pausche-Optionen
+const pauscheByModell: Record<string, string[]> = {
+  "Bentley St. Michael": ["Standard", "Pausche hochgesetzt", "Pausche zurück gesetzt"],
+  "Bentley St. Florian": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03"],
+  "Bentley Performence": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03"],
+  "Endurance": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
+  "Icelandic": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
+  "FSA Dressur": ["Standard"],
+  "FSA Springer": ["Standard"],
+  "FSA Vielseitigkeit": ["Standard"],
+  "FSA Icelandic": ["Standard"],
+  "Cayenne Classic": ["Standard", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
+  "Cayenne Offroad": ["Standard", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
+};
+const pauscheOptions = pauscheByModell[modell] ?? [];
+
+
+
 
 
 // 2)
@@ -141,7 +164,7 @@ for (let y = 0; y <= height; y += 50) {
       font
     })
     //check 
-    page.drawText(model || "-",{
+    page.drawText(modell || "-",{
       x: 104,
       y: 600,
       size: 10,
@@ -214,7 +237,7 @@ for (let y = 0; y <= height; y += 50) {
       size: 10,
       font
     })
-    page.drawText(pauschetyp || "-",{
+    page.drawText(pausche || "-",{
       x: 100,
       y: 430,
       size: 10,
@@ -428,13 +451,31 @@ URL.revokeObjectURL(url);
     onChange={setSattelbaum}
     placeholder="Sattelbaum"
     options={["KS-Baum", "AEX-Baum"]}
-  />   
-  <Dropdown
-    value={model}
-    onChange={setModel}
-    placeholder="Modell"
-    options={["Bentley St. Michael", "Bentley St. Florian", "Bentley Performence", "Endurance", "Icelandic", "FSA Dressur", "FSA Springer", "FSA Vielseitigkeit", "FSA Icelandic", "Cayenne Classic", "Cayenne Offroad"]}
   />
+      {/*Test dynamic*/}
+    {/* Modell */}
+<select
+  value={modell}
+  onChange={(e) => {
+    const m = e.target.value;
+    setModell(m);
+    setPausche(""); // RESET wenn sich Eingabe ändert
+  }}
+  style={{ width: "100%", padding: 10, marginBottom: 12 }}
+>
+  <option value="">Modell auswählen</option>
+  <option value="Bentley St. Michael">Bentley St. Michael</option>
+  <option value="Bentley St. Florian">Bentley St. Florian</option>
+  <option value="Bentley Performence">Bentley Performence</option>
+  <option value="Endurance">Endurance</option>
+  <option value="Icelandic">Icelandic</option>
+  <option value="FSA Dressur">FSA Dressur</option>
+  <option value="FSA Springer">FSA Springer</option>
+  <option value="FSA Vielseitigkeit">FSA Vielseitigkeit</option>
+  <option value="FSA Icelandic">FSA Icelandic</option>
+  <option value="Cayenne Classic">Cayenne Classic</option>
+  <option value="Cayenne Offroad">Cayenne Offroad</option>
+</select>
   <Dropdown
     value={sattelfarbe}
     onChange={setSattelfarbe}
@@ -526,12 +567,22 @@ URL.revokeObjectURL(url);
     placeholder="Pauschentasche"
     options={["PT: Ja", "PT: Nein"]}
   />
-  <Dropdown
-    value={pauschetyp}
-    onChange={setPauschetyp}
-    placeholder="Pausche"
-    options={["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"]}
-  />
+  <select
+  value={pausche}
+  onChange={(e) => setPausche(e.target.value)}
+  disabled={!modell}
+  style={{ width: "100%", padding: 10, marginBottom: 12 }}
+>
+  <option value="">
+    {modell ? "Pausche auswählen" : "Bitte zuerst Modell wählen"}
+  </option>
+
+  {pauscheOptions.map((p) => (
+    <option key={p} value={p}>
+      {p}
+    </option>
+  ))}
+</select>
   <h1
     style={{fontWeight: "bold", fontSize: 18}}>
     Kissen
@@ -623,6 +674,23 @@ URL.revokeObjectURL(url);
       marginBottom: 20,
     }}
     />
+{/* Pausche (Optionen ändern sich) */}
+<select
+  value={pausche}
+  onChange={(e) => setPausche(e.target.value)}
+  disabled={!modell}
+  style={{ width: "100%", padding: 10, marginBottom: 12 }}
+>
+  <option value="">
+    {modell ? "Pausche auswählen" : "Bitte zuerst Modell wählen"}
+  </option>
+
+  {pauscheOptions.map((p) => (
+    <option key={p} value={p}>
+      {p}
+    </option>
+  ))}
+</select>
     </>
 
       {/* Unterschrift */}
@@ -642,7 +710,6 @@ URL.revokeObjectURL(url);
             },
           }}
         />
-
         <button
           type="button"
           onClick={() => sigRef.current?.clear()}
