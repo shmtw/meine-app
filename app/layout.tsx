@@ -38,6 +38,7 @@ export default function RootLayout({
         >
           <Link href="/">Start</Link>
           <Link href="/sattelbestellung">Sattelbestellung</Link>
+          <Link href="/musterkarten">Musterkarten</Link>
           <Link href="/fotos">Fotos</Link>
         </nav>
 
