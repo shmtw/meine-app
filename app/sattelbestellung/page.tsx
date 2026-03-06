@@ -14,7 +14,7 @@ const [sattelfarbe, setSattelfarbe] = useState("");
 const [nahtfarbe, setNahtfarbe] = useState("");
 const [groesse, setGroesse] = useState("");
 const [keder, setKeder] = useState("");
-const [model, setModel] = useState("");
+//const [model, setModel] = useState("");
 const [sattelbaum, setSattelbaum] = useState("");
 const [efter, setEfter] = useState("");
 const [spiegelart, setSpiegelart] = useState("");
@@ -24,12 +24,12 @@ const [zubussefarbe, setZubussfarbe] = useState("");
 const [vorschnitt, setVorschnitt] = useState("");
 const [sattelblatt, setSattelblatt] = useState("");
 const [pauschentasche, setPauschentasche] = useState("");
-const [pauschetyp, setPauschetyp] = useState("");
+//const [pauschetyp, setPauschetyp] = useState("");
 const [kissentyp, setKissentyp] = useState("");
 const [kissenlaenge, setKissenlaenge] = useState("");
 const [kissenkeder, setKissenkeder] = useState("");
 const [mono,setMono] = useState("");
-const [michael, setMichael] = useState("");
+//const [michael, setMichael] = useState("");
 
 const [steine, SetSteine] = useState("");
 const [kommentar, setKommentar] = useState("");
@@ -41,6 +41,7 @@ const [straße, SetStraße] = useState("");
 const [plz, SetPlz] = useState("");
 const [tel, SetTel] =useState("");
 const [mail, SetMail] = useState("");
+const [packringe, SetPackringe] = useState("");
 
 
 //Test dynamic
@@ -446,12 +447,6 @@ URL.revokeObjectURL(url);
       Sattel allgemein 
     </h1>
 <>
-    <Dropdown
-    value={sattelbaum}
-    onChange={setSattelbaum}
-    placeholder="Sattelbaum"
-    options={["KS-Baum", "AEX-Baum"]}
-  />
       {/*Test dynamic*/}
     {/* Modell */}
 <select
@@ -476,6 +471,12 @@ URL.revokeObjectURL(url);
   <option value="Cayenne Classic">Cayenne Classic</option>
   <option value="Cayenne Offroad">Cayenne Offroad</option>
 </select>
+  <Dropdown
+    value={sattelbaum}
+    onChange={setSattelbaum}
+    placeholder="Sattelbaum"
+    options={["KS-Baum", "AEX-Baum"]}
+  />
   <Dropdown
     value={sattelfarbe}
     onChange={setSattelfarbe}
@@ -612,7 +613,19 @@ URL.revokeObjectURL(url);
     onChange={(e) =>
   SetSteine(e.target.value)}
     style={{
-      width:300,
+      width:350,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
+    <input
+    type="text"
+    placeholder="Packringe nur bei Abweichung ausfüllen"
+    value={packringe}
+    onChange={(e) =>
+  SetPackringe(e.target.value)}
+    style={{
+      width:350,
       padding: 10,
       marginBottom: 20,
     }}
@@ -674,23 +687,7 @@ URL.revokeObjectURL(url);
       marginBottom: 20,
     }}
     />
-{/* Pausche (Optionen ändern sich) */}
-<select
-  value={pausche}
-  onChange={(e) => setPausche(e.target.value)}
-  disabled={!modell}
-  style={{ width: "100%", padding: 10, marginBottom: 12 }}
->
-  <option value="">
-    {modell ? "Pausche auswählen" : "Bitte zuerst Modell wählen"}
-  </option>
 
-  {pauscheOptions.map((p) => (
-    <option key={p} value={p}>
-      {p}
-    </option>
-  ))}
-</select>
     </>
 
       {/* Unterschrift */}
