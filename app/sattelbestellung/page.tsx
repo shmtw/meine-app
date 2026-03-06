@@ -274,6 +274,12 @@ for (let y = 0; y <= height; y += 50) {
       size: 10,
       font
     })
+    page.drawText(`Packringe: ${packringe}` || "-",{
+      x: 100,
+      y: 289,
+      size: 10,
+      font
+    })
     page.drawText(`Zusätzliche Beschreibung: ${kommentar}` || "-",{
       x: 100,
       y: 260,
