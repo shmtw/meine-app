@@ -4,7 +4,7 @@
 import { useState, useRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-
+import Image from "next/image"
 
 export default function Page() {
   // Variablen für dropdown!!
@@ -42,6 +42,8 @@ const [plz, SetPlz] = useState("");
 const [tel, SetTel] =useState("");
 const [mail, SetMail] = useState("");
 const [packringe, SetPackringe] = useState("");
+const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
+const [showPreview, setShowPreview] = useState(false);
 
 
 //Test dynamic
@@ -97,25 +99,21 @@ const Dropdown = ({
 
 
 
+async function generatePDF() {
+  // Template laden
+  const templateBytes = await fetch("/Template.pdf").then((res) =>
+    res.arrayBuffer()
+  );
 
-
-  async function generatePDF() {
-    // Template laden
-    const templateBytes = await fetch("/Template.pdf").then((res) =>
-      res.arrayBuffer()
-    );
-
-    const pdfDoc = await PDFDocument.load(templateBytes);
-    const page = pdfDoc.getPages()[0];
-    const { width, height } = page.getSize();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontBold = await
-    pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-
+  const pdfDoc = await PDFDocument.load(templateBytes);
+  const page = pdfDoc.getPages()[0];
+  const { width, height } = page.getSize();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
    
 
 // Gitternetz!!!!!!!!
+/*
 for (let x = 0; x <= width; x += 50) {
   page.drawLine({
     start: { x, y: 0 },
@@ -135,6 +133,7 @@ for (let y = 0; y <= height; y += 50) {
   });
   page.drawText(String(y), { x: 2, y: y + 2, size: 8, font, color: rgb(0.5,0.5,0.5) });
 }
+  */
 
    // ab ins pdf mit der Auswahl POS!!!!!!!!!!!!
     page.drawText(sattelfarbe || "-", {
@@ -336,6 +335,8 @@ for (let y = 0; y <= height; y += 50) {
       font
     })
 
+    
+
 
     // 🔹 Unterschrift unten rechts
     if (sigRef.current && !sigRef.current.isEmpty()) {
@@ -360,22 +361,67 @@ for (let y = 0; y <= height; y += 50) {
       });
     }
 
- // PDF speichern
-const pdfBytes = await pdfDoc.save();
+  // PDF erzeugen
+  const pdfBytes = await pdfDoc.save();
+  const safeBytes = new Uint8Array(pdfBytes);
 
-// pdf gen
-const safeBytes = new Uint8Array(pdfBytes.length);
-safeBytes.set(pdfBytes);
-
-const blob = new Blob([safeBytes], { type: "application/pdf" });
-
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
-a.href = url;
-a.download = "Sattelbestellung.pdf";
-a.click();
-URL.revokeObjectURL(url);
+  // Alte Preview URL aufräumen
+  if (pdfPreviewUrl) {
+    URL.revokeObjectURL(pdfPreviewUrl);
   }
+
+  // Neue Blob URL erstellen
+  const blob = new Blob([safeBytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
+  // URL speichern
+  setPdfPreviewUrl(url);
+
+  // Vorschau in neuem Tab öffnen
+  const previewWindow = window.open("", "_blank");
+  if(!previewWindow){
+    alert("Popup blocked");
+    return;
+  }
+    // HTML mit eingebettetem PDF schreiben
+  previewWindow.document.write(`
+    <html>
+      <head>
+        <title>PDF Vorschau</title>
+        <style>
+          html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #666;
+          }
+          embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+          }
+        </style>
+      </head>
+      <body>
+        <embed src="${url}" type="application/pdf" />
+      </body>
+    </html>
+  `);
+
+  previewWindow.document.close();
+}
+
+  function savePreviewPdf() {
+      if (!pdfPreviewUrl) return;
+
+      const a = document.createElement("a");
+      a.href = pdfPreviewUrl;
+      a.download = "Sattelbestellung.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
 
   return (
     <main style={{ padding: 30, maxWidth: 600 }}>
@@ -590,6 +636,17 @@ URL.revokeObjectURL(url);
     </option>
   ))}
 </select>
+{pausche === "Pausche hochgesetzt" && (
+  <div style={{ marginTop: 20, marginBottom: 20 }}>
+    <Image
+      src="/pauschehoch.jpeg"
+      alt="Spezialpausche 1"
+      width={300}
+      height={200}
+    />
+  </div>
+)}
+
   <h1
     style={{fontWeight: "bold", fontSize: 18}}>
     Kissen
@@ -722,17 +779,30 @@ URL.revokeObjectURL(url);
         </button>
       </div>
 
-      {/* PDF Button */}
       <button
-        onClick={generatePDF}
-        style={{
-          padding: "12px 18px",
-          fontSize: 16,
-        }}
-      >
-        PDF speichern
-      </button>
+  type="button"
+  onClick={generatePDF}
+  style={{
+    padding: "12px 18px",
+    fontSize: 16,
+    marginRight: 12,
+  }}
+>
+  PDF Vorschau öffnen
+</button>
+
+<button
+  type="button"
+  onClick={savePreviewPdf}
+  style={{
+    padding: "12px 18px",
+    fontSize: 16,
+  }}
+>
+  PDF speichern
+</button>
     </main>
+    
   );
 }
 
