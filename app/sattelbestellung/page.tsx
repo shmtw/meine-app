@@ -6,7 +6,35 @@ import SignatureCanvas from "react-signature-canvas";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import Image from "next/image"
 
+import { useEffect} from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+
+
+
 export default function Page() {
+
+const supabase = createClient();
+const router = useRouter();
+const [checkingUser, setCheckingUser] = useState(true);
+
+useEffect(() => {
+  async function checkUser() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setCheckingUser(false);
+  }
+
+  checkUser();
+}, [router, supabase]);
+
   // Variablen für dropdown!!
   
 const sigRef = useRef<SignatureCanvas | null>(null);
@@ -44,6 +72,8 @@ const [mail, SetMail] = useState("");
 const [packringe, SetPackringe] = useState("");
 const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
 const [showPreview, setShowPreview] = useState(false);
+const [softness, setSoftness] = useState("");
+const [probesattel, setProbesattel] = useState("");
 
 
 //Test dynamic
@@ -58,6 +88,7 @@ const pauscheByModell: Record<string, string[]> = {
   "Bentley Performence": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03"],
   "Endurance": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
   "Icelandic": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
+  "Icelandic New": ["Standard", "Pausche: D18","Pausche: D11","Pausche: D02", "Pausche: D03", "Pausche: Ice09", "Pausche: j01", "Pausche: j07", "Pausche: j10", "Pausche: j06", "Pausche: j20"],
   "FSA Dressur": ["Standard"],
   "FSA Springer": ["Standard"],
   "FSA Vielseitigkeit": ["Standard"],
@@ -149,6 +180,12 @@ for (let y = 0; y <= height; y += 50) {
       size: 10,
       font
     })
+    page.drawText(softness || "-", {
+      x: 400,
+      y: 583,
+      size: 10,
+      font
+    })
     //check
     page.drawText(groesse || "-", {
       x: 190,
@@ -228,6 +265,12 @@ for (let y = 0; y <= height; y += 50) {
     page.drawText(sattelblatt || "-",{
       x: 425,
       y: 400,
+      size: 10,
+      font
+    })
+    page.drawText(`SN Probesattel: ${probesattel}` || "-",{
+      x: 425,
+      y: 350,
       size: 10,
       font
     })
@@ -360,7 +403,7 @@ for (let y = 0; y <= height; y += 50) {
         height: sigHeight,
       });
     }
-
+  
   // PDF erzeugen
   const pdfBytes = await pdfDoc.save();
   const safeBytes = new Uint8Array(pdfBytes);
@@ -422,6 +465,9 @@ for (let y = 0; y <= height; y += 50) {
       a.click();
       a.remove();
     }
+
+if (checkingUser) {return <main style = {{ padding: 30}}
+>Lade...</main>}  
 
   return (
     <main style={{ padding: 30, maxWidth: 600 }}>
@@ -516,6 +562,7 @@ for (let y = 0; y <= height; y += 50) {
   <option value="Bentley Performence">Bentley Performence</option>
   <option value="Endurance">Endurance</option>
   <option value="Icelandic">Icelandic</option>
+  <option value="Icelandic New">Icelandic New</option>
   <option value="FSA Dressur">FSA Dressur</option>
   <option value="FSA Springer">FSA Springer</option>
   <option value="FSA Vielseitigkeit">FSA Vielseitigkeit</option>
@@ -553,6 +600,12 @@ for (let y = 0; y <= height; y += 50) {
     options={["Sitzgröße: 16", "Sitzgröße: 16,5", "Sitzgröße: 17", "Sitzgröße: 17,5", "Sitzgröße: 18"]}
   />
   <Dropdown
+    value={softness}
+    onChange={setSoftness}
+    placeholder="Sitzhärte"
+    options={["Sitzhärte Standard", "Sitzhärte supersoft"]}
+    />
+  <Dropdown
     value={keder}
     onChange={setKeder}
     placeholder="Kederfarbe"
@@ -574,7 +627,7 @@ for (let y = 0; y <= height; y += 50) {
     value={spiegelfarbe}
     onChange={setSpiegelfarbe}
     placeholder="Spiegelfarbe"
-    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "dunkelrot", "blau", "orange", "kroko schwarz", "kroko blau", "kroko dunkelrot", "kroko braun", "rochen", "schwarz - weiss", "gold", "gecko", "glitzer schwarz", "glitzer braun", "glitzer beige", "glitzer silber"]}
+    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "Lack dunkelrot", "blau", "orange", "kroko schwarz", "kroko blau", "kroko dunkelrot", "kroko braun", "rochen", "schwarz - weiss", "gold", "gecko", "glitzer schwarz", "glitzer braun", "glitzer beige", "glitzer silber"]}
   />
   <Dropdown
     value={zubusseart}
@@ -586,7 +639,7 @@ for (let y = 0; y <= height; y += 50) {
     value={zubussefarbe}
     onChange={setZubussfarbe}
     placeholder="Zubusse Farbe"
-    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "dunkelrot", "blau", "orange"]}
+    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "Lack dunkelrot", "blau", "orange"]}
   />
   <h1
     style={{fontWeight: "bold", fontSize: 18}}>
@@ -602,7 +655,7 @@ for (let y = 0; y <= height; y += 50) {
     value={sattelblatt}
     onChange={setSattelblatt}
     placeholder="Sattelblatt"
-    options={["Sattelblatt doubliert", "Sattelblatt pig skin", "Sattelblatt glatt"]}
+    options={["Sattelblatt doubliert", "Sattelblatt pig skin", "Sattelblatt glatt", "Sattelblatt Büffelleder"]}
   />
   <Dropdown
     value={mono}
@@ -610,6 +663,18 @@ for (let y = 0; y <= height; y += 50) {
     placeholder="Mono-Doppel"
     options={["Standard", "Doppelblatt", "Monoblatt"]}
   />
+  <input
+    type="text"
+    placeholder="SN Probesattel"
+    value={probesattel}
+    onChange={(e) =>
+  setProbesattel(e.target.value)}
+    style={{
+      width:300,
+      padding: 10,
+      marginBottom: 20,
+    }}
+    />
   <h1
     style={{fontWeight: "bold", fontSize: 18}}>
     Pausche
