@@ -426,33 +426,102 @@ for (let y = 0; y <= height; y += 50) {
     alert("Popup blocked");
     return;
   }
-    // HTML mit eingebettetem PDF schreiben
-  previewWindow.document.write(`
-    <html>
-      <head>
-        <title>PDF Vorschau</title>
-        <style>
-          html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            background: #666;
-          }
-          embed {
-            width: 100%;
-            height: 100%;
-            border: none;
-          }
-        </style>
-      </head>
-      <body>
-        <embed src="${url}" type="application/pdf" />
-      </body>
-    </html>
-  `);
+   // HTML mit eingebettetem PDF schreiben
+previewWindow.document.write(`
+  <html>
+    <head>
+      <title>PDF Vorschau</title>
 
-  previewWindow.document.close();
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+      />
+
+      <style>
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          font-family: Arial, sans-serif;
+          background: #666;
+        }
+
+        body {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .toolbar {
+          flex-shrink: 0;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+
+          padding: 10px;
+          padding-top: max(10px, env(safe-area-inset-top));
+
+          background: white;
+          border-bottom: 1px solid #ccc;
+        }
+
+        .toolbar button,
+        .toolbar a {
+          appearance: none;
+          border: 1px solid #aaa;
+          border-radius: 6px;
+          background: #f5f5f5;
+          color: #000;
+          text-decoration: none;
+          font-size: 16px;
+          padding: 10px 14px;
+          cursor: pointer;
+        }
+
+        .pdf-container {
+          flex: 1;
+          min-height: 0;
+        }
+
+        embed {
+          display: block;
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+      </style>
+    </head>
+
+    <body>
+
+      <div class="toolbar">
+
+        <button onclick="window.close()">
+          ← Zurück zur Eingabe
+        </button>
+
+        <a
+          href="${url}"
+          download="Sattelbestellung.pdf"
+        >
+          PDF speichern
+        </a>
+
+      </div>
+
+      <div class="pdf-container">
+        <embed
+          src="${url}"
+          type="application/pdf"
+        />
+      </div>
+
+    </body>
+  </html>
+`);
+
+previewWindow.document.close();
 }
 
   function savePreviewPdf() {
