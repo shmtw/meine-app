@@ -130,7 +130,7 @@ const Dropdown = ({
 
 
 
-async function generatePDF() {
+async function generatePDF(openPreview: boolean) {
   // Template laden
   const templateBytes = await fetch("/Template.pdf").then((res) =>
     res.arrayBuffer()
@@ -419,6 +419,18 @@ for (let y = 0; y <= height; y += 50) {
 
   // URL speichern
   setPdfPreviewUrl(url);
+
+  // Wenn keine Vorschau gewünscht ist: PDF direkt speichern
+if (!openPreview) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Sattelbestellung.pdf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  return;
+}
 
   // Vorschau in neuem Tab öffnen
   const previewWindow = window.open("", "_blank");
@@ -915,7 +927,7 @@ if (checkingUser) {return <main style = {{ padding: 30}}
 
       <button
   type="button"
-  onClick={generatePDF}
+  onClick={() => generatePDF(true)}
   style={{
     padding: "12px 18px",
     fontSize: 16,
@@ -927,12 +939,13 @@ if (checkingUser) {return <main style = {{ padding: 30}}
 
 <button
   type="button"
-  onClick={savePreviewPdf}
+  onClick={() => generatePDF(false)}
   style={{
     padding: "12px 18px",
     fontSize: 16,
   }}
 >
+
   PDF speichern
 </button>
     </main>
