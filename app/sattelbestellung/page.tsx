@@ -420,11 +420,41 @@ for (let y = 0; y <= height; y += 50) {
   // URL speichern
   setPdfPreviewUrl(url);
 
-  // Wenn keine Vorschau gewünscht ist: PDF direkt speichern
+// Wenn keine Vorschau gewünscht ist: PDF speichern
 if (!openPreview) {
+
+  // PDF als echte Datei vorbereiten
+  const file = new File(
+    [safeBytes],
+    "Sattelbestellung.pdf",
+    { type: "application/pdf" }
+  );
+
+  // iPhone / iPad erkennen
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" &&
+      navigator.maxTouchPoints > 1);
+
+  // iPhone / iPad -> nativen Apple-Dialog öffnen
+  if (isIOS && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "Sattelbestellung",
+      });
+    } catch (error) {
+      console.log("Speichern abgebrochen:", error);
+    }
+
+    return;
+  }
+
+  // Windows / Android / Mac -> normal herunterladen
   const a = document.createElement("a");
   a.href = url;
   a.download = "Sattelbestellung.pdf";
+
   document.body.appendChild(a);
   a.click();
   a.remove();
