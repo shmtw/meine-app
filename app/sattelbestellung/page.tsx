@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import Image from "next/image"
@@ -14,7 +14,7 @@ import { createClient } from "@/utils/supabase/client";
 
 export default function Page() {
 
-const supabase = createClient();
+const supabase = useMemo(() => createClient(), []);
 const router = useRouter();
 const [checkingUser, setCheckingUser] = useState(true);
 const [canManageInventory, setCanManageInventory] = useState(false);
