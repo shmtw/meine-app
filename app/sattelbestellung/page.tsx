@@ -17,6 +17,7 @@ export default function Page() {
 const supabase = createClient();
 const router = useRouter();
 const [checkingUser, setCheckingUser] = useState(true);
+const [canManageInventory, setCanManageInventory] = useState(false);
 
 useEffect(() => {
   async function checkUser() {
@@ -28,6 +29,22 @@ useEffect(() => {
       router.push("/login");
       return;
     }
+    const { data: permission, error } = await supabase
+  .from("user_permissions")
+  .select("can_manage_inventory")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+if (error) {
+  console.error("Fehler beim Laden der Berechtigung:", error);
+}
+
+setCanManageInventory(permission?.can_manage_inventory === true);
+
+console.log(
+  "Lagerführung erlaubt:",
+  permission?.can_manage_inventory === true
+);
 
     setCheckingUser(false);
   }
