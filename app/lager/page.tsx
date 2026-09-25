@@ -14,10 +14,23 @@ type Saddle = {
   sonstiges: string;
 };
 
-type ApiResponse = {
+type LagerResponse = {
   success: boolean;
   count: number;
   saddles: Saddle[];
+  error?: string;
+};
+
+type AbgleichResponse = {
+  success: boolean;
+  message?: string;
+  geprueft?: number;
+  aktualisiert?: number;
+  saddles?: {
+    sattelNr: string;
+    art: string;
+    dealIds: string[];
+  }[];
   error?: string;
 };
 
@@ -32,9 +45,27 @@ export default function LagerPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
+  const [abgleichLoading, setAbgleichLoading] = useState(false);
+  const [abgleichMessage, setAbgleichMessage] = useState("");
+
+  async function loadLager() {
+    const response = await fetch("/api/lager", {
+      cache: "no-store",
+    });
+
+    const result: LagerResponse = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Lagerbestand konnte nicht geladen werden"
+      );
+    }
+
+    setSaddles(result.saddles);
+  }
+
   useEffect(() => {
     async function start() {
-      // Benutzerberechtigung prüfen
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -60,21 +91,8 @@ export default function LagerPage() {
 
       setAllowed(true);
 
-      // Lagerbestand laden
       try {
-        const response = await fetch("/api/lager", {
-          cache: "no-store",
-        });
-
-        const result: ApiResponse = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(
-            result.error || "Lagerbestand konnte nicht geladen werden"
-          );
-        }
-
-        setSaddles(result.saddles);
+        await loadLager();
       } catch (err) {
         setError(
           err instanceof Error
@@ -88,6 +106,52 @@ export default function LagerPage() {
 
     start();
   }, [router, supabase]);
+
+  async function handleAbgleich() {
+    setAbgleichLoading(true);
+    setAbgleichMessage("");
+    setError("");
+
+    try {
+      const response = await fetch("/api/lager/abgleich", {
+        cache: "no-store",
+      });
+
+      const result: AbgleichResponse = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "Lagerabgleich fehlgeschlagen"
+        );
+      }
+
+      if ((result.aktualisiert ?? 0) === 0) {
+        setAbgleichMessage(
+          `Lagerbestand ist aktuell. ${result.geprueft ?? 0} Sättel geprüft.`
+        );
+      } else {
+        setAbgleichMessage(
+          `${result.aktualisiert} ${
+            result.aktualisiert === 1
+              ? "verkaufter Sattel wurde"
+              : "verkaufte Sättel wurden"
+          } aktualisiert.`
+        );
+      }
+
+      // Lagerliste danach neu laden.
+      // Verkaufte Sättel verschwinden dadurch sofort.
+      await loadLager();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unbekannter Fehler"
+      );
+    } finally {
+      setAbgleichLoading(false);
+    }
+  }
 
   const filteredSaddles = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -125,15 +189,6 @@ export default function LagerPage() {
     return null;
   }
 
-  if (error) {
-    return (
-      <main style={{ padding: "40px" }}>
-        <h1>Lagerführung</h1>
-        <p style={{ color: "#a00" }}>{error}</p>
-      </main>
-    );
-  }
-
   return (
     <main
       style={{
@@ -145,13 +200,14 @@ export default function LagerPage() {
     >
       <h1>Lagerführung</h1>
 
-      {/* Statistik */}
+      {/* Statistik + Abgleich */}
 
       <div
         style={{
           display: "flex",
           gap: "15px",
           flexWrap: "wrap",
+          alignItems: "stretch",
           marginTop: "25px",
           marginBottom: "30px",
         }}
@@ -160,7 +216,60 @@ export default function LagerPage() {
           label="Aktuell auf Lager"
           value={saddles.length}
         />
+
+        <button
+          onClick={handleAbgleich}
+          disabled={abgleichLoading}
+          style={{
+            border: "none",
+            borderRadius: "8px",
+            padding: "15px 25px",
+            minWidth: "190px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: abgleichLoading
+              ? "not-allowed"
+              : "pointer",
+            background: abgleichLoading
+              ? "#999"
+              : "#234f3d",
+            color: "white",
+          }}
+        >
+          {abgleichLoading
+            ? "Abgleich läuft..."
+            : "Jetzt abgleichen"}
+        </button>
       </div>
+
+      {abgleichMessage && (
+        <div
+          style={{
+            marginBottom: "25px",
+            padding: "14px 18px",
+            border: "1px solid #b8d6c8",
+            borderRadius: "8px",
+            background: "#f2faf6",
+          }}
+        >
+          {abgleichMessage}
+        </div>
+      )}
+
+      {error && (
+        <div
+          style={{
+            marginBottom: "25px",
+            padding: "14px 18px",
+            border: "1px solid #d8aaaa",
+            borderRadius: "8px",
+            background: "#fff5f5",
+            color: "#900",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       {/* Suche */}
 
@@ -188,8 +297,7 @@ export default function LagerPage() {
       </div>
 
       <p style={{ marginBottom: "20px" }}>
-        Angezeigt:{" "}
-        <strong>{filteredSaddles.length}</strong>
+        Angezeigt: <strong>{filteredSaddles.length}</strong>
       </p>
 
       {/* Tabellenkopf */}
@@ -233,13 +341,9 @@ export default function LagerPage() {
           </div>
 
           <div>{saddle.art || "–"}</div>
-
           <div>{saddle.sattlerei || "–"}</div>
-
           <div>{saddle.orderNo || "–"}</div>
-
           <div>{saddle.baum || "–"}</div>
-
           <div>{saddle.sonstiges || "–"}</div>
         </div>
       ))}
