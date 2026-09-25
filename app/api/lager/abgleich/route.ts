@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as XLSX from "xlsx";
 
 export async function GET() {
   try {
@@ -13,7 +14,7 @@ export async function GET() {
       );
     }
 
-    // Microsoft Access Token
+    // Microsoft Access Token holen
     const tokenResponse = await fetch(
       `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
       {
@@ -37,36 +38,16 @@ export async function GET() {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Unsere bereits bekannte SharePoint-Site
-    const siteId =
-      "reitsattel-my.sharepoint.com,3757e7dc-ae59-4542-ba20-734148e0fc41,4ba63a56-b86b-47f5-b79a-d0ffb4a5bdbb";
+    // Bekannte SharePoint-Datei
+    const driveId =
+      "b!3OdXN1muQkW6IHNBSOD8QVY6pktruPVHt5rQ_7Slvbszo4lW4PhwT74CSi1lLSyB";
 
-    // OneDrive/Document Library der Site holen
-    const driveResponse = await fetch(
-      `https://graph.microsoft.com/v1.0/sites/${siteId}/drive`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const fileId =
+      "01JJFGA2B73QAEJFJVIJCJHZZOIUSDOZMA";
 
-    if (!driveResponse.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          step: "drive",
-          details: await driveResponse.text(),
-        },
-        { status: driveResponse.status }
-      );
-    }
-
-    const drive = await driveResponse.json();
-
-    // Lagerliste anhand des Pfads suchen
+    // Excel-Datei herunterladen
     const fileResponse = await fetch(
-      `https://graph.microsoft.com/v1.0/drives/${drive.id}/root:/3s-Automat/Lagerf%C3%BChrung/Lagerliste_3s.xlsx`,
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -78,30 +59,43 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          step: "file",
+          step: "download",
           details: await fileResponse.text(),
         },
         { status: fileResponse.status }
       );
     }
 
-    const file = await fileResponse.json();
+    const arrayBuffer = await fileResponse.arrayBuffer();
+
+    // Excel lesen
+    const workbook = XLSX.read(arrayBuffer, {
+      type: "array",
+      cellDates: true,
+    });
+
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+      defval: "",
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Lagerliste gefunden",
-      file: {
-        name: file.name,
-        id: file.id,
-        size: file.size,
-        lastModifiedDateTime: file.lastModifiedDateTime,
-      },
+      message: "Lagerliste gelesen",
+      sheet: sheetName,
+      count: rows.length,
+      rows,
     });
   } catch (error) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unbekannter Fehler",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unbekannter Fehler",
       },
       { status: 500 }
     );
