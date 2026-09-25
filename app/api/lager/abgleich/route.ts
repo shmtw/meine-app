@@ -77,17 +77,90 @@ export async function GET() {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    const rows = XLSX.utils.sheet_to_json(worksheet, {
-      defval: "",
-    });
+    type LagerRow = {
+  "Sattel-NR": string | number;
+  Datum: string | Date;
+  Art: string;
+  Sattlerei: string;
+  "Order No": string | number;
+  Baum: string | number;
+  verkauft: string;
+  sonstiges: string;
+};
+
+const rows = XLSX.utils.sheet_to_json<LagerRow>(worksheet, {
+  defval: "",
+});
+const bitrixUrl = process.env.BITRIX_WEBHOOK_URL;
+
+if (!bitrixUrl) {
+  throw new Error("BITRIX_WEBHOOK_URL fehlt");
+}
+
+// Nur Sättel prüfen, die in Excel noch NICHT verkauft sind
+const offeneSaettel = rows.filter(
+  (row) =>
+    row["Sattel-NR"] &&
+    String(row.verkauft).trim().toLowerCase() !== "ja"
+);
+
+const ergebnis = [];
+
+for (const row of offeneSaettel) {
+  const sattelNr = String(row["Sattel-NR"]).trim();
+
+  const response = await fetch(
+    `${bitrixUrl}/crm.deal.list.json`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        filter: {
+          UF_CRM_1656582274102: sattelNr,
+          UF_CRM_1656399545855: "1052",
+        },
+        select: [
+          "ID",
+          "TITLE",
+          "UF_CRM_1656582274102",
+          "UF_CRM_1656399545855",
+        ],
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Bitrix-Abfrage für Sattel ${sattelNr} fehlgeschlagen`
+    );
+  }
+
+  const data = await response.json();
+  const deals = data.result ?? [];
+
+  ergebnis.push({
+    sattelNr,
+    art: row.Art,
+    excelVerkauft: row.verkauft || "",
+    bitrixVerkauft: deals.length > 0,
+    dealIds: deals.map((deal: { ID: string }) => deal.ID),
+    aktion:
+      deals.length > 0
+        ? 'würde auf "ja" gesetzt'
+        : "keine Änderung",
+  });
+}
 
     return NextResponse.json({
-      success: true,
-      message: "Lagerliste gelesen",
-      sheet: sheetName,
-      count: rows.length,
-      rows,
-    });
+  success: true,
+  message: "Lagerabgleich Dry-Run abgeschlossen",
+  lagerZeilen: rows.length,
+  geprueft: offeneSaettel.length,
+  ergebnis,
+});
   } catch (error) {
     return NextResponse.json(
       {
