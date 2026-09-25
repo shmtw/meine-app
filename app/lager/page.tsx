@@ -4,6 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
+type Saddle = {
+  sattelNr: string;
+  datum: string;
+  art: string;
+  sattlerei: string;
+  orderNo: string;
+  baum: string;
+  sonstiges: string;
+};
+
+type ApiResponse = {
+  success: boolean;
+  count: number;
+  saddles: Saddle[];
+  error?: string;
+};
+
 export default function LagerPage() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
@@ -11,8 +28,13 @@ export default function LagerPage() {
   const [loading, setLoading] = useState(true);
   const [allowed, setAllowed] = useState(false);
 
+  const [saddles, setSaddles] = useState<Saddle[]>([]);
+  const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    async function checkPermission() {
+    async function start() {
+      // Benutzerberechtigung prüfen
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -22,41 +44,241 @@ export default function LagerPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error: permissionError } = await supabase
         .from("user_permissions")
         .select("can_manage_inventory")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error || data?.can_manage_inventory !== true) {
+      if (
+        permissionError ||
+        data?.can_manage_inventory !== true
+      ) {
         router.replace("/");
         return;
       }
 
       setAllowed(true);
-      setLoading(false);
+
+      // Lagerbestand laden
+      try {
+        const response = await fetch("/api/lager", {
+          cache: "no-store",
+        });
+
+        const result: ApiResponse = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.error || "Lagerbestand konnte nicht geladen werden"
+          );
+        }
+
+        setSaddles(result.saddles);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unbekannter Fehler"
+        );
+      } finally {
+        setLoading(false);
+      }
     }
 
-    checkPermission();
+    start();
   }, [router, supabase]);
 
+  const filteredSaddles = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    if (!term) {
+      return saddles;
+    }
+
+    return saddles.filter((saddle) => {
+      const searchable = [
+        saddle.sattelNr,
+        saddle.art,
+        saddle.sattlerei,
+        saddle.orderNo,
+        saddle.baum,
+        saddle.sonstiges,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(term);
+    });
+  }, [saddles, search]);
+
   if (loading) {
-    return <main style={{ padding: 30 }}>Lade...</main>;
+    return (
+      <main style={{ padding: "40px" }}>
+        <h1>Lagerführung</h1>
+        <p>Lagerbestand wird geladen...</p>
+      </main>
+    );
   }
 
   if (!allowed) {
     return null;
   }
 
-  return (
-    <main style={{ padding: 30 }}>
-      <h1 style={{ fontWeight: "bold", fontSize: 24 }}>
-        Lagerführung
-      </h1>
+  if (error) {
+    return (
+      <main style={{ padding: "40px" }}>
+        <h1>Lagerführung</h1>
+        <p style={{ color: "#a00" }}>{error}</p>
+      </main>
+    );
+  }
 
-      <p style={{ marginTop: 16 }}>
-        Lagerverwaltung 3S-Sattel
+  return (
+    <main
+      style={{
+        maxWidth: "1400px",
+        margin: "0 auto",
+        padding: "40px 20px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1>Lagerführung</h1>
+
+      {/* Statistik */}
+
+      <div
+        style={{
+          display: "flex",
+          gap: "15px",
+          flexWrap: "wrap",
+          marginTop: "25px",
+          marginBottom: "30px",
+        }}
+      >
+        <Stat
+          label="Aktuell auf Lager"
+          value={saddles.length}
+        />
+      </div>
+
+      {/* Suche */}
+
+      <div
+        style={{
+          marginBottom: "30px",
+          padding: "20px",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Sattelnummer, Modell, Sattlerei, Order No, Baum oder Sonstiges suchen..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            border: "1px solid #bbb",
+            borderRadius: "5px",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      <p style={{ marginBottom: "20px" }}>
+        Angezeigt:{" "}
+        <strong>{filteredSaddles.length}</strong>
       </p>
+
+      {/* Tabellenkopf */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "1fr 1.4fr 1.2fr 1fr 2fr 2fr",
+          gap: "10px",
+          fontWeight: "bold",
+          padding: "10px 0",
+          borderBottom: "2px solid #333",
+        }}
+      >
+        <div>Sattel-Nr.</div>
+        <div>Art</div>
+        <div>Sattlerei</div>
+        <div>Order No</div>
+        <div>Baum</div>
+        <div>Sonstiges</div>
+      </div>
+
+      {/* Lagerbestand */}
+
+      {filteredSaddles.map((saddle) => (
+        <div
+          key={saddle.sattelNr}
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "1fr 1.4fr 1.2fr 1fr 2fr 2fr",
+            gap: "10px",
+            alignItems: "center",
+            padding: "12px 0",
+            borderBottom: "1px solid #ddd",
+          }}
+        >
+          <div>
+            <strong>{saddle.sattelNr}</strong>
+          </div>
+
+          <div>{saddle.art || "–"}</div>
+
+          <div>{saddle.sattlerei || "–"}</div>
+
+          <div>{saddle.orderNo || "–"}</div>
+
+          <div>{saddle.baum || "–"}</div>
+
+          <div>{saddle.sonstiges || "–"}</div>
+        </div>
+      ))}
+
+      {filteredSaddles.length === 0 && (
+        <p style={{ marginTop: "25px" }}>
+          Keine passenden Sättel gefunden.
+        </p>
+      )}
     </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        padding: "15px 25px",
+        minWidth: "170px",
+      }}
+    >
+      <strong
+        style={{
+          display: "block",
+          fontSize: "24px",
+        }}
+      >
+        {value}
+      </strong>
+
+      {label}
+    </div>
   );
 }
