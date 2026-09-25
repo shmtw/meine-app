@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 */
 
-import Link from "next/link";
+import Navigation from "./navigation";
 export const metadata: Metadata = {
   title: "Sattelbestellung",
   description: "Sattelbestellung App",
@@ -39,19 +39,7 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body style={{ margin: 0, fontFamily: "Arial, sans-serif" }}>
-        <nav
-          style={{
-            padding: 16,
-            borderBottom: "1px solid #ddd",
-            display: "flex",
-            gap: 16,
-          }}
-        >
-          <Link href="/">Start</Link>
-          <Link href="/sattelbestellung">Sattelbestellung</Link>
-          <Link href="/musterkarten">Musterkarten</Link>
-          <Link href="/fotos">Fotos</Link>
-        </nav>
+        <Navigation />
 
         {children}
       </body>
