@@ -12,7 +12,8 @@ export async function GET() {
     );
   }
 
-  const response = await fetch(
+  // 1. Access Token holen
+  const tokenResponse = await fetch(
     `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
     {
       method: "POST",
@@ -28,14 +29,39 @@ export async function GET() {
     }
   );
 
-  if (!response.ok) {
-    const error = await response.text();
-
+  if (!tokenResponse.ok) {
     return NextResponse.json(
       {
         success: false,
         error: "Microsoft-Anmeldung fehlgeschlagen",
-        details: error,
+        details: await tokenResponse.text(),
+      },
+      { status: 500 }
+    );
+  }
+
+  const tokenData = await tokenResponse.json();
+  const accessToken = tokenData.access_token;
+
+  // 2. Unsere bekannte SharePoint-Site abfragen
+  const siteResponse = await fetch(
+    "https://graph.microsoft.com/v1.0/sites/reitsattel-my.sharepoint.com:/personal/info_3s-sattel_at",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  const siteData = await siteResponse.json();
+
+  if (!siteResponse.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Microsoft-Anmeldung funktioniert, Site-Zugriff aber noch nicht",
+        graphStatus: siteResponse.status,
+        details: siteData,
       },
       { status: 500 }
     );
@@ -43,6 +69,11 @@ export async function GET() {
 
   return NextResponse.json({
     success: true,
-    message: "Microsoft-Anmeldung funktioniert",
+    message: "SharePoint-Site gefunden",
+    site: {
+      id: siteData.id,
+      name: siteData.name,
+      webUrl: siteData.webUrl,
+    },
   });
 }
