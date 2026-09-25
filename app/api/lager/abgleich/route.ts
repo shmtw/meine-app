@@ -60,7 +60,7 @@ export async function GET() {
     const fileId =
       "01JJFGA2B73QAEJFJVIJCJHZZOIUSDOZMA";
 
-    // Excel-Datei herunterladen
+    // Excel herunterladen
     const fileResponse = await fetch(
       `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`,
       {
@@ -79,7 +79,6 @@ export async function GET() {
 
     const arrayBuffer = await fileResponse.arrayBuffer();
 
-    // Excel lesen
     const workbook = XLSX.read(arrayBuffer, {
       type: "array",
       cellDates: true,
@@ -92,120 +91,119 @@ export async function GET() {
       defval: "",
     });
 
-    // --------------------------------------------------
-    // SICHERHEIT FÜR DEN ERSTEN SCHREIBTEST:
-    // Ausschließlich Sattel 21369 darf geändert werden.
-    // --------------------------------------------------
-    const testSattelNr = "21369";
-
-    const row = rows.find(
-      (r) => String(r["Sattel-NR"]).trim() === testSattelNr
+    // Nur aktuell lagernde Sättel prüfen
+    const offeneSaettel = rows.filter(
+      (row) =>
+        row["Sattel-NR"] &&
+        String(row.verkauft).trim().toLowerCase() !== "ja"
     );
 
-    if (!row) {
-      throw new Error(`Sattel ${testSattelNr} nicht in Excel gefunden`);
-    }
+    const verkaufteSaettel: {
+      sattelNr: string;
+      art: string;
+      dealIds: string[];
+    }[] = [];
 
-    if (String(row.verkauft).trim().toLowerCase() === "ja") {
-      return NextResponse.json({
-        success: true,
-        message: `Sattel ${testSattelNr} ist bereits als verkauft markiert`,
-        geschrieben: false,
-      });
-    }
+    // Jeden offenen Sattel in Bitrix prüfen
+    for (const row of offeneSaettel) {
+      const sattelNr = String(row["Sattel-NR"]).trim();
 
-    // Bitrix prüfen
-    const bitrixResponse = await fetch(
-      `${bitrixUrl}/crm.deal.list.json`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          filter: {
-            UF_CRM_1656582274102: testSattelNr,
-            UF_CRM_1656399545855: "1052",
+      const bitrixResponse = await fetch(
+        `${bitrixUrl}/crm.deal.list.json`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          select: [
-            "ID",
-            "TITLE",
-            "UF_CRM_1656582274102",
-            "UF_CRM_1656399545855",
-          ],
-        }),
-        cache: "no-store",
-      }
-    );
-
-    if (!bitrixResponse.ok) {
-      throw new Error(
-        `Bitrix-Abfrage fehlgeschlagen: ${await bitrixResponse.text()}`
+          body: JSON.stringify({
+            filter: {
+              UF_CRM_1656582274102: sattelNr,
+              UF_CRM_1656399545855: "1052",
+            },
+            select: [
+              "ID",
+              "TITLE",
+              "UF_CRM_1656582274102",
+              "UF_CRM_1656399545855",
+            ],
+          }),
+          cache: "no-store",
+        }
       );
+
+      if (!bitrixResponse.ok) {
+        throw new Error(
+          `Bitrix-Abfrage für Sattel ${sattelNr} fehlgeschlagen`
+        );
+      }
+
+      const bitrixData = await bitrixResponse.json();
+      const deals = bitrixData.result ?? [];
+
+      if (deals.length > 0) {
+        verkaufteSaettel.push({
+          sattelNr,
+          art: String(row.Art || ""),
+          dealIds: deals.map(
+            (deal: { ID: string }) => deal.ID
+          ),
+        });
+      }
     }
 
-    const bitrixData = await bitrixResponse.json();
-    const deals = bitrixData.result ?? [];
-
-    // Kein Verkauf gefunden -> NICHT schreiben
-    if (deals.length === 0) {
+    // Nichts gefunden -> Excel NICHT hochladen
+    if (verkaufteSaettel.length === 0) {
       return NextResponse.json({
         success: true,
-        message: `Sattel ${testSattelNr} wurde in Bitrix nicht als verkauft gefunden`,
-        geschrieben: false,
+        message: "Lagerbestand ist aktuell",
+        geprueft: offeneSaettel.length,
+        aktualisiert: 0,
+        saddles: [],
       });
     }
 
-    // --------------------------------------------------
-    // Richtige Excel-Zeile finden.
-    // Zeile 1 = Überschriften, daher beginnen Daten bei 2.
-    // --------------------------------------------------
-    let excelRowNumber: number | null = null;
-
+    // Gefundene Sättel in Excel auf "ja" setzen
     const range = XLSX.utils.decode_range(worksheet["!ref"]!);
 
     for (let r = range.s.r + 1; r <= range.e.r; r++) {
-      const cellAddress = XLSX.utils.encode_cell({
+      const sattelCellAddress = XLSX.utils.encode_cell({
         r,
         c: 0, // Spalte A = Sattel-NR
       });
 
-      const cell = worksheet[cellAddress];
+      const sattelCell = worksheet[sattelCellAddress];
 
-      if (
-        cell &&
-        String(cell.v).trim() === testSattelNr
-      ) {
-        // XLSX arbeitet 0-basiert, Excel 1-basiert
-        excelRowNumber = r + 1;
-        break;
+      if (!sattelCell) {
+        continue;
+      }
+
+      const sattelNr = String(sattelCell.v).trim();
+
+      const wurdeVerkauft = verkaufteSaettel.some(
+        (sattel) => sattel.sattelNr === sattelNr
+      );
+
+      if (wurdeVerkauft) {
+        // Spalte G = verkauft
+        const verkauftCellAddress = XLSX.utils.encode_cell({
+          r,
+          c: 6,
+        });
+
+        worksheet[verkauftCellAddress] = {
+          t: "s",
+          v: "ja",
+        };
       }
     }
 
-    if (excelRowNumber === null) {
-      throw new Error(
-        `Excel-Zeile für Sattel ${testSattelNr} konnte nicht gefunden werden`
-      );
-    }
-
-    // Spalte G = verkauft
-    const verkauftCell = `G${excelRowNumber}`;
-
-    worksheet[verkauftCell] = {
-      t: "s",
-      v: "ja",
-    };
-
-    // Workbook wieder als XLSX erzeugen
+    // Excel neu erzeugen
     const output = XLSX.write(workbook, {
       type: "buffer",
       bookType: "xlsx",
     });
 
-    // --------------------------------------------------
-    // Datei über Microsoft Graph zurück nach SharePoint
-    // schreiben.
-    // --------------------------------------------------
+    // Zurück nach SharePoint schreiben
     const uploadResponse = await fetch(
       `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`,
       {
@@ -220,25 +218,28 @@ export async function GET() {
     );
 
     if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.text();
+
+      if (
+        uploadResponse.status === 423 ||
+        uploadError.includes("resourceLocked")
+      ) {
+        throw new Error(
+          "Die Lagerliste ist derzeit in Excel geöffnet. Bitte schließen und erneut versuchen."
+        );
+      }
+
       throw new Error(
-        `Excel-Upload fehlgeschlagen: ${await uploadResponse.text()}`
+        `Excel-Upload fehlgeschlagen: ${uploadError}`
       );
     }
 
-    const uploadedFile = await uploadResponse.json();
-
     return NextResponse.json({
       success: true,
-      message: `Sattel ${testSattelNr} wurde auf verkauft gesetzt`,
-      geschrieben: true,
-      sattelNr: testSattelNr,
-      excelZelle: verkauftCell,
-      neuerWert: "ja",
-      bitrixDealIds: deals.map(
-        (deal: { ID: string }) => deal.ID
-      ),
-      sharePointLastModified:
-        uploadedFile.lastModifiedDateTime ?? null,
+      message: `${verkaufteSaettel.length} verkaufte Sättel wurden aktualisiert`,
+      geprueft: offeneSaettel.length,
+      aktualisiert: verkaufteSaettel.length,
+      saddles: verkaufteSaettel,
     });
   } catch (error) {
     return NextResponse.json(
