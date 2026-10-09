@@ -767,7 +767,7 @@ if (checkingUser) {return <main style = {{ padding: 30}}
     value={zubussefarbe}
     onChange={setZubussfarbe}
     placeholder="Zubusse Farbe"
-    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "Lack dunkelrot", "blau", "orange"]}
+    options={["schwarz", "dunkelbraun","teak", "cognac", "rot", "beige", "grau", "weiss", "kirsche", "hellblau", "grün", "Lack dunkelrot", "blau", "orange", "kroko schwarz", "kroko blau", "kroko dunkelrot", "kroko braun", "rochen", "schwarz - weiss", "gold", "gecko", "glitzer schwarz", "glitzer braun", "glitzer beige", "glitzer silber"]}
   />
   <h1
     style={{fontWeight: "bold", fontSize: 18}}>
